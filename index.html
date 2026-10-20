@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F1-Retro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="hud" hidden>
+    <div class="hud-tl">
+      <div id="hud-pos" class="big"></div>
+      <div id="hud-lap"></div>
+      <div id="hud-gaps"></div>
+    </div>
+    <div class="hud-tr">
+      <div id="hud-time" class="big"></div>
+      <div id="hud-last"></div>
+      <div id="hud-best"></div>
+    </div>
+    <div id="hud-lights" hidden><span></span><span></span><span></span><span></span><span></span></div>
+    <div id="hud-msg"></div>
+    <div id="hud-boostcall" hidden></div>
+    <div id="hud-pit" hidden><div id="hud-pit-status"></div><div id="hud-pit-tires"></div></div>
+    <div class="hud-bottom">
+      <div id="hud-speed" class="big"></div>
+      <div class="meter"><label>TIRES <span id="hud-compound" class="compound"></span></label><div class="bar"><i id="hud-tires"></i></div><span id="hud-tires-txt"></span></div>
+      <div class="meter"><label>BOOST</label><div class="bar"><i id="hud-boost"></i></div><span id="hud-boost-txt"></span></div>
+      <div id="hud-tc"></div>
+    </div>
+    <div id="hud-controls" hidden></div>
+  </div>
+
+  <div id="menu"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
