@@ -10,8 +10,8 @@ import { createPitState, togglePitRequest, updatePit, inPitLane, setNextCompound
 const PHYSICS_DT = 1 / 120;
 const GRID_SPACING = 7;
 const AI_LAP_FACTOR = 1.045; // measured: an AI lap takes ~4.5% longer than the speed profile's ideal time
-const DIFFICULTY_PACE = { rookie: 0.86, pro: 0.96, legend: 1.0 };
-const AUTO_EDGE = 1.02;      // auto difficulty: the field aims 2% quicker than the player's practice best
+const DIFFICULTY_PACE = { rookie: 0.93, pro: 0.98, legend: 1.02 };
+const AUTO_EDGE = 1.03;      // auto difficulty: the field aims 3% quicker than the player's practice best
 const MAX_AI_PACE = 1.03;    // ceiling for any one AI car's pace, after its skill roll
 const TIMING_STEP = 100;     // metres between the timing marks the leaderboard gaps are taken at
 
@@ -111,7 +111,7 @@ export class Session {
     // AI pace: from the player's practice best (auto) or a fixed difficulty
     let basePace = DIFFICULTY_PACE.pro;
     if (opts.difficulty === 'auto') {
-      if (opts.bestLap) basePace = Math.max(0.6, Math.min(1.0, (this.profile.refTime * AI_LAP_FACTOR * AUTO_EDGE) / opts.bestLap));
+      if (opts.bestLap) basePace = Math.max(0.6, Math.min(DIFFICULTY_PACE.legend, (this.profile.refTime * AI_LAP_FACTOR * AUTO_EDGE) / opts.bestLap));
     } else basePace = DIFFICULTY_PACE[opts.difficulty] || DIFFICULTY_PACE.pro;
     this.basePace = basePace;
 
@@ -403,7 +403,7 @@ export class Session {
       // widen the view with speed, and kick it out further while boosting
       this.fovBoost += ((c.boosting ? 10 : 0) - this.fovBoost) * Math.min(1, dt * 4);
       cam.fov = 70 + Math.min(12, Math.abs(c.speed) * 0.12) + this.fovBoost;
-      const target = new THREE.Vector3(c.x - sin * 9, c.y + 3.5, c.z - cos * 9);
+      const target = new THREE.Vector3(c.x - sin * 9, c.y + 4.5, c.z - cos * 9);
       cam.position.lerp(target, 1 - Math.exp(-6 * dt));
       cam.lookAt(c.x + sin * 6, c.y + 1, c.z + cos * 6);
     }

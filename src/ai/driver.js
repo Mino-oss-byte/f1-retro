@@ -6,6 +6,16 @@ const ACCEL_PLAN = 15;      // m/s^2 the AI assumes it can accelerate at
 
 const wrap = (a) => { while (a > Math.PI) a -= Math.PI * 2; while (a < -Math.PI) a += Math.PI * 2; return a; };
 
+// Fastest speed whose yaw rate (v / radius) the steering can hold, using CORNER_SAFETY of it.
+function cornerSpeed(radius) {
+  let lo = 0, hi = 200;
+  for (let k = 0; k < 30; k++) {
+    const v = (lo + hi) / 2;
+    if (v / radius <= maxYawRate(v, 1) * CORNER_SAFETY) lo = v; else hi = v;
+  }
+  return lo;
+}
+
 // Target speed for every racing-line point: what the steering can hold through each corner,
 // limited by braking distance into it and acceleration out of it. `top` is the car's top speed.
 export function buildSpeedProfile(line, top = MAX_SPEED) {
@@ -23,9 +33,7 @@ export function buildSpeedProfile(line, top = MAX_SPEED) {
     const turn = Math.abs(wrap(h2 - h1));
     const arc = Math.hypot(b.x - a.x, b.z - a.z) + Math.hypot(c.x - b.x, c.z - b.z);
     const radius = turn < 1e-3 ? 1e6 : arc / turn;
-    // steering capability: v^2/25 + v = 1.9 * R  (see maxYawRate)
-    const vc = 12.5 * (-1 + Math.sqrt(1 + (4 * 1.9 * radius * CORNER_SAFETY) / 25));
-    v[i] = Math.min(vc, top * 0.99);
+    v[i] = Math.min(cornerSpeed(radius), top * 0.99);
   }
   // smooth out single-point noise, then braking (backwards) and acceleration (forwards) limits
   for (let pass = 0; pass < 2; pass++) {

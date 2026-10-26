@@ -6,7 +6,12 @@ const DRAG = 0.0022;         // quadratic drag
 const REVERSE_MAX = 12;
 const OFFTRACK_DRAG = 80;    // decel while slowing down to the off-track cap
 const OFFTRACK_MAX = MAX_SPEED * 0.9; // grass / gravel: top speed is held to 90%
-const MAX_STEER_RATE = 1.9;  // rad/s at low speed
+const MAX_STEER_RATE = 2.4;  // rad/s at low speed
+const STEER_FADE = 25;       // m/s: steering starts to fade with speed
+const STEER_FADE_HIGH = 45;  // m/s: above this it fades much faster (aero load, tire limit)
+const STEER_RAMP = 7;        // keyboard steering: lock gained per second at low speed
+const STEER_RAMP_FADE = 35;  // m/s: the wheel turns in more slowly as speed rises
+const STEER_CENTER = 8;      // lock released per second when the key comes up
 const GRAVITY = 9.8 * 0.6;   // arcade: how strongly hills slow or speed the car
 
 // Traction control levels. `spin` is how much wheelspin full throttle in a corner can cause.
@@ -44,7 +49,7 @@ export function createCarState(x, z, heading) {
     x, z, heading, y: 0, speed: 0,
     tc: 1, slip: 0, tireWear: 0, compound: 'medium',
     boostEnergy: 0, boostAvailable: false, boosting: false,
-    slope: 0,
+    slope: 0, steer: 0,
   };
 }
 
@@ -67,15 +72,29 @@ export function topSpeedOf(car) {
 }
 
 // Max yaw rate (rad/s) the steering can produce at the car's current speed and grip.
+// Tight at low speed, falling away sharply at high speed.
 export function maxYawRate(speed, grip) {
-  return MAX_STEER_RATE * grip / (1 + Math.abs(speed) / 25);
+  const v = Math.abs(speed);
+  return MAX_STEER_RATE * grip / (1 + v / STEER_FADE + (v / STEER_FADE_HIGH) ** 2);
+}
+
+// Keyboard steering eases toward full lock instead of snapping there, more slowly at speed.
+function rampSteer(car, target, dt) {
+  const rate = target === 0 || Math.sign(target) !== Math.sign(car.steer)
+    ? STEER_CENTER
+    : STEER_RAMP / (1 + Math.abs(car.speed) / STEER_RAMP_FADE);
+  const d = target - car.steer;
+  car.steer += Math.sign(d) * Math.min(Math.abs(d), rate * dt);
+  return car.steer;
 }
 
 // input: { throttle, brake, boost } booleans plus either `steer` (-1..1, + = left) or { left, right }.
 // heading 0 points along +z; positive heading turns toward +x
 export function stepCar(car, input, dt, onTrack) {
   const throttle = input.throttle ? 1 : 0;
-  const steerInput = input.steer !== undefined ? input.steer : (input.left ? 1 : 0) - (input.right ? 1 : 0);
+  const steerInput = input.steer !== undefined
+    ? (car.steer = input.steer)
+    : rampSteer(car, (input.left ? 1 : 0) - (input.right ? 1 : 0), dt);
   const steering = Math.abs(steerInput) > 0.3;
   const grip = gripOf(car);
   const tc = TC_LEVELS[car.tc];
