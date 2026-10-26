@@ -292,13 +292,13 @@ export class Session {
   // Two circles per car (nose and tail) keep nose-to-tail contact believable.
   collide() {
     const cars = this.cars;
-    const R = 1.2, OFF = 1.56; // sized to the 1.2x car mesh
+    const R = 1.44, OFF = 1.87; // sized to the 1.44x car mesh
     for (let a = 0; a < cars.length; a++) {
       for (let b = a + 1; b < cars.length; b++) {
         const A = cars[a], B = cars[b];
         if (inPitLane(A) || inPitLane(B)) continue;
         const dx0 = B.x - A.x, dz0 = B.z - A.z;
-        if (dx0 * dx0 + dz0 * dz0 > 36) continue;
+        if (dx0 * dx0 + dz0 * dz0 > 49) continue;
         let hit = false;
         for (const fa of [-OFF, OFF]) {
           for (const fb of [-OFF, OFF]) {
@@ -397,8 +397,8 @@ export class Session {
     const cam = this.camera;
     if (this.cameraMode === 'cockpit') {
       cam.fov = 85;
-      cam.position.set(c.x + sin * 0.72, c.y + 1.38, c.z + cos * 0.72);
-      cam.lookAt(c.x + sin * 40, c.y + 1.2 + c.slope * 40 * 0.5, c.z + cos * 40);
+      cam.position.set(c.x + sin * 0.86, c.y + 1.66, c.z + cos * 0.86);
+      cam.lookAt(c.x + sin * 40, c.y + 1.44 + c.slope * 40 * 0.5, c.z + cos * 40);
     } else {
       // widen the view with speed, and kick it out further while boosting
       this.fovBoost += ((c.boosting ? 10 : 0) - this.fovBoost) * Math.min(1, dt * 4);
