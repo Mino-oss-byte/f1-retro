@@ -133,6 +133,8 @@ export function resultsScreen(app, results, trackName) {
 export function creditsScreen(app) {
   show(`<div class="screen credits">
     <h2>CREDITS</h2>
+    <p>Coded by Mino.</p>
+    <p>Inspired by Tulane Formula Racing.</p>
     <p>Track layouts for Silverstone, Albert Park, COTA and Spa-Francorchamps:
       <a href="https://github.com/TUMFTM/racetrack-database" target="_blank" rel="noopener">TUM racetrack database</a>
       (Technical University of Munich, LGPL-3.0).</p>
