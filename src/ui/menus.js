@@ -73,7 +73,7 @@ export function garageScreen(app, mode, settings) {
     <h3>TRACK</h3><div class="tracks">${tracks}</div>
     <h3>TEAM (all cars perform the same)</h3><div class="teams">${teams}</div>
     <h3>STARTING TIRE</h3><div class="opts">${COMPOUND_ORDER.map((c) => opt('startCompound', c, COMPOUNDS[c].name)).join('')}</div>
-    <p class="hint">SOFT: most grip, wears fastest · MEDIUM: balanced · HARD: least grip, lasts longest. Press 1/2/3 in a pit stop to change.</p>
+    <p class="hint">SOFT: +10% top speed, wears 20% faster · MEDIUM: balanced · HARD: -8% top speed, wears 20% slower. Press 1/2/3 in a pit stop to change.</p>
     <h3>TRACTION CONTROL</h3><div class="opts">${TC_LEVELS.map((l, i) => opt('tc', i, l.name)).join('')}</div>
     ${race ? `
       <h3>AI DIFFICULTY</h3><div class="opts">${opt('difficulty', 'auto', 'AUTO')}${opt('difficulty', 'rookie', 'ROOKIE')}${opt('difficulty', 'pro', 'PRO')}${opt('difficulty', 'legend', 'LEGEND')}</div>

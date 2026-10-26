@@ -1,5 +1,5 @@
 export const MAX_SPEED = 85;        // m/s (~300 km/h)
-export const BOOST_SPEED = MAX_SPEED * 1.15; // overtake mode: +15% top speed
+export const BOOST_FACTOR = 1.15;  // overtake mode: +15% top speed
 const ACCEL = 24;            // m/s^2
 const BRAKE = 50;
 const DRAG = 0.0022;         // quadratic drag
@@ -24,11 +24,11 @@ const WEAR_CORNERING = 0.0014;
 const WEAR_SPIN = 0.002;
 const MIN_GRIP = 0.6;        // grip left on fully worn tires
 
-// Tire compounds: softer = more grip but wears faster.
+// Tire compounds: `speed` scales top speed, `wear` scales how fast the tires wear.
 export const COMPOUNDS = {
-  soft: { name: 'SOFT', letter: 'S', color: '#e2332b', grip: 1.07, wear: 1.8 },
-  medium: { name: 'MEDIUM', letter: 'M', color: '#ffcc33', grip: 1.0, wear: 1.0 },
-  hard: { name: 'HARD', letter: 'H', color: '#f4f1e8', grip: 0.94, wear: 0.6 },
+  soft: { name: 'SOFT', letter: 'S', color: '#e2332b', speed: 1.1, wear: 1.2 },
+  medium: { name: 'MEDIUM', letter: 'M', color: '#ffcc33', speed: 1.0, wear: 1.0 },
+  hard: { name: 'HARD', letter: 'H', color: '#f4f1e8', speed: 0.92, wear: 0.8 },
 };
 export const COMPOUND_ORDER = ['soft', 'medium', 'hard'];
 
@@ -57,9 +57,13 @@ export function resetTires(car, compound) {
   if (compound) car.compound = compound;
 }
 
-// compound grip on fresh tires, falling to MIN_GRIP of that when fully worn
+// full grip on fresh tires, falling to MIN_GRIP when fully worn
 export function gripOf(car) {
-  return COMPOUNDS[car.compound].grip * (1 - (1 - MIN_GRIP) * car.tireWear);
+  return 1 - (1 - MIN_GRIP) * car.tireWear;
+}
+
+export function topSpeedOf(car) {
+  return MAX_SPEED * COMPOUNDS[car.compound].speed;
 }
 
 // Max yaw rate (rad/s) the steering can produce at the car's current speed and grip.
@@ -106,12 +110,13 @@ export function stepCar(car, input, dt, onTrack) {
   car.speed -= Math.sign(car.speed) * DRAG * car.speed * car.speed * dt;
   car.speed -= GRAVITY * car.slope * (car.speed >= 0 ? 1 : -1) * dt; // uphill slows, downhill speeds up
 
-  const top = car.boosting ? BOOST_SPEED : MAX_SPEED;
+  const tireTop = topSpeedOf(car);
+  const top = car.boosting ? tireTop * BOOST_FACTOR : tireTop;
   if (!onTrack && car.speed > OFFTRACK_MAX) {
     car.speed = Math.max(OFFTRACK_MAX, car.speed - OFFTRACK_DRAG * dt);
   }
   // coming off boost, bleed back down to normal top speed rather than snapping
-  if (!car.boosting && car.speed > MAX_SPEED) car.speed = Math.max(MAX_SPEED, car.speed - 12 * dt);
+  if (!car.boosting && car.speed > tireTop) car.speed = Math.max(tireTop, car.speed - 12 * dt);
   car.speed = Math.max(-REVERSE_MAX, Math.min(top, car.speed));
 
   // steering weakens at high speed and on worn tires

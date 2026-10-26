@@ -1,4 +1,4 @@
-import { maxYawRate, gripOf, MAX_SPEED, BOOST_SPEED } from '../car/carPhysics.js';
+import { maxYawRate, gripOf, topSpeedOf, MAX_SPEED, BOOST_FACTOR } from '../car/carPhysics.js';
 
 const CORNER_SAFETY = 0.4; // fraction of the turning capability the AI plans to use
 const BRAKE_DECEL = 34;     // m/s^2 the AI plans to brake at (the car can do ~50)
@@ -7,8 +7,8 @@ const ACCEL_PLAN = 15;      // m/s^2 the AI assumes it can accelerate at
 const wrap = (a) => { while (a > Math.PI) a -= Math.PI * 2; while (a < -Math.PI) a += Math.PI * 2; return a; };
 
 // Target speed for every racing-line point: what the steering can hold through each corner,
-// limited by braking distance into it and acceleration out of it.
-export function buildSpeedProfile(line) {
+// limited by braking distance into it and acceleration out of it. `top` is the car's top speed.
+export function buildSpeedProfile(line, top = MAX_SPEED) {
   const { pts } = line;
   const n = pts.length;
   const ds = new Float32Array(n);
@@ -25,7 +25,7 @@ export function buildSpeedProfile(line) {
     const radius = turn < 1e-3 ? 1e6 : arc / turn;
     // steering capability: v^2/25 + v = 1.9 * R  (see maxYawRate)
     const vc = 12.5 * (-1 + Math.sqrt(1 + (4 * 1.9 * radius * CORNER_SAFETY) / 25));
-    v[i] = Math.min(vc, MAX_SPEED * 0.99);
+    v[i] = Math.min(vc, top * 0.99);
   }
   // smooth out single-point noise, then braking (backwards) and acceleration (forwards) limits
   for (let pass = 0; pass < 2; pass++) {
@@ -56,8 +56,9 @@ export function pursuit(car, tx, tz) {
   return Math.max(-1, Math.min(1, yawNeeded / maxYawRate(speed, gripOf(car))));
 }
 
-export function createDriver(line, profile, pace) {
-  return { line, profile, pace, idx: undefined, offset: 0, offsetTarget: 0 };
+// `profiles` (optional) holds one speed profile per tire compound, since each has its own top speed.
+export function createDriver(line, profile, pace, profiles) {
+  return { line, profile, profiles, pace, idx: undefined, offset: 0, offsetTarget: 0 };
 }
 
 function nearestLineIndex(line, x, z, hint) {
@@ -81,7 +82,8 @@ function nearestLineIndex(line, x, z, hint) {
 
 // Returns the driving input for an AI car. `traffic` is the nearest car ahead (or null).
 export function driveAI(car, driver, track, traffic, wantsPit) {
-  const { line, profile, pace } = driver;
+  const { line, pace } = driver;
+  const profile = driver.profiles?.[car.compound] || driver.profile;
   const { pts, cum } = line;
   const n = pts.length;
   driver.idx = nearestLineIndex(line, car.x, car.z, driver.idx);
@@ -143,7 +145,7 @@ export function driveAI(car, driver, track, traffic, wantsPit) {
   const straightAhead = Math.abs(steer) < 0.2 && profile.speed[(i + 12) % n] > MAX_SPEED * 0.85;
   if (car.boostAvailable && car.boostEnergy > 0.1 && straightAhead && attacking && gap < 35 && !traffic.boosting) {
     boost = true;
-    vt = Math.min(BOOST_SPEED - 1, vt + 12);
+    vt = Math.min(topSpeedOf(car) * BOOST_FACTOR - 1, vt + 12);
   }
   const throttle = speed < vt - 0.5;
   const brake = speed > vt + 2.5;

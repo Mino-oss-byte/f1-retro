@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TEAMS } from '../data/teams.js';
 import { createTrack } from '../track/trackBuilder.js';
 import { createCarMesh } from '../car/carMesh.js';
-import { createCarState, stepCar, cycleTractionControl, COMPOUNDS, BOOST_MIN_ENERGY } from '../car/carPhysics.js';
+import { createCarState, stepCar, cycleTractionControl, COMPOUNDS, COMPOUND_ORDER, MAX_SPEED, BOOST_MIN_ENERGY } from '../car/carPhysics.js';
 import { buildSpeedProfile, createDriver, driveAI } from '../ai/driver.js';
 import { createPitState, togglePitRequest, updatePit, inPitLane, setNextCompound, PIT_STOP_TIME } from '../ai/pit.js';
 
@@ -11,9 +11,12 @@ const GRID_SPACING = 7;
 const AI_LAP_FACTOR = 1.045; // measured: an AI lap takes ~4.5% longer than the speed profile's ideal time
 const DIFFICULTY_PACE = { rookie: 0.82, pro: 0.92, legend: 1.0 };
 
+// one AI speed profile per tire compound, since each compound has its own top speed
 const profileCache = new Map();
-const profileFor = (track) => {
-  if (!profileCache.has(track.id)) profileCache.set(track.id, buildSpeedProfile(track.racingLine));
+const profilesFor = (track) => {
+  if (!profileCache.has(track.id)) {
+    profileCache.set(track.id, Object.fromEntries(COMPOUND_ORDER.map((c) => [c, buildSpeedProfile(track.racingLine, MAX_SPEED * COMPOUNDS[c].speed)])));
+  }
   return profileCache.get(track.id);
 };
 
@@ -45,7 +48,8 @@ export class Session {
     this.events = [];        // transient messages for the HUD
 
     this.track = createTrack(opts.trackData);
-    this.profile = profileFor(this.track);
+    this.profiles = profilesFor(this.track);
+    this.profile = this.profiles.medium;
     this.buildScene();
     this.buildCars();
 
@@ -122,7 +126,7 @@ export class Session {
       c.mesh = createCarMesh(team.primary, team.secondary);
       this.scene.add(c.mesh);
       const skill = 0.95 + this.rng() * 0.08; // each AI is a little faster or slower, so the field has to pass
-      c.driver = createDriver(track.racingLine, this.profile, Math.min(1.02, basePace * skill));
+      c.driver = createDriver(track.racingLine, this.profile, Math.min(1.02, basePace * skill), this.profiles);
       c.planPitWear = 0.5 + this.rng() * 0.15; // AI pits once when its tires reach this wear
       this.cars.push(c);
       if (isPlayer) setNextCompound(c, c.compound);
@@ -270,7 +274,7 @@ export class Session {
   // Two circles per car (nose and tail) keep nose-to-tail contact believable.
   collide() {
     const cars = this.cars;
-    const R = 1.0, OFF = 1.3;
+    const R = 1.2, OFF = 1.56; // sized to the 1.2x car mesh
     for (let a = 0; a < cars.length; a++) {
       for (let b = a + 1; b < cars.length; b++) {
         const A = cars[a], B = cars[b];
@@ -345,8 +349,8 @@ export class Session {
     const cam = this.camera;
     if (this.cameraMode === 'cockpit') {
       cam.fov = 85;
-      cam.position.set(c.x + sin * 0.6, c.y + 1.15, c.z + cos * 0.6);
-      cam.lookAt(c.x + sin * 40, c.y + 1.0 + c.slope * 40 * 0.5, c.z + cos * 40);
+      cam.position.set(c.x + sin * 0.72, c.y + 1.38, c.z + cos * 0.72);
+      cam.lookAt(c.x + sin * 40, c.y + 1.2 + c.slope * 40 * 0.5, c.z + cos * 40);
     } else {
       // widen the view with speed, and kick it out further while boosting
       this.fovBoost += ((c.boosting ? 10 : 0) - this.fovBoost) * Math.min(1, dt * 4);

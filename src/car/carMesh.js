@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 
+const CAR_SCALE = 1.2;
+
 const mat = (color) => new THREE.MeshLambertMaterial({ color, flatShading: true });
 
 // Shared geometry for all cars; only the two team materials differ per car.
@@ -38,6 +40,7 @@ export function createCarMesh(primary = '#006747', secondary = '#418FDE') {
   add(geo.helmet, helmetMat, 0, 0.8, 0.4);
   for (const [x, z] of [[-1.0, 1.2], [1.0, 1.2], [-1.0, -1.2], [1.0, -1.2]]) add(geo.wheel, dark, x, 0.38, z);
 
+  car.scale.setScalar(CAR_SCALE);
   car.rotation.order = 'YXZ';
   return car;
 }
