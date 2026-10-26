@@ -1,8 +1,9 @@
 name: Deploy to GitHub Pages
 
-# Manual only: the repo is private, and GitHub Pages needs a public repo on the free plan.
-# Run it from the Actions tab if the repo is made public with Pages turned on.
+# Publishes the game to https://mino-oss-byte.github.io/f1-retro/ on every push to main.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

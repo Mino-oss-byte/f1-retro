@@ -18,7 +18,7 @@ npm run build      # outputs dist/
 Upload `dist/` to any static host:
 - **Netlify**: drag the `dist` folder onto https://app.netlify.com/drop
 - **Vercel**: `npx vercel deploy dist --prod`
-- **GitHub Pages**: needs a public repo on the free plan. Set Settings → Pages → Source: GitHub Actions, then run **Deploy to GitHub Pages** from the Actions tab (it no longer runs on every push)
+- **GitHub Pages**: live at https://mino-oss-byte.github.io/f1-retro/. The **Deploy to GitHub Pages** workflow publishes it on every push to `main`
 
 ## Controls
 

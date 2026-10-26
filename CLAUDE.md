@@ -51,7 +51,7 @@ To add or regenerate a track, run `scripts/import-track.js`, which converts TUM 
 GitHub is the record of the project's progress. Work that is not pushed can be lost. Don't let work pile up locally.
 
 - **Commit as you go.** Each time a working piece is finished and checked (a feature, a fix, a tuning pass, a new track), commit it. In a long task, commit at each milestone too, not only at the end. Make each commit one logical change, so any one of them can be reverted on its own.
-- **Push right after each commit** (`git push`; remote `origin`, branch `main`, private repo https://github.com/Mino-oss-byte/f1-retro). If a push fails, tell the user straight away. Never end a session with commits that exist only locally.
+- **Push right after each commit** (`git push`; remote `origin`, branch `main`, public repo https://github.com/Mino-oss-byte/f1-retro). If a push fails, tell the user straight away. Never end a session with commits that exist only locally.
 - **Clean commit messages:**
   - The subject line is imperative, under ~70 characters, and says what changed (for example: "Bigger cars (1.2x), tire compounds set top speed and wear rate").
   - After a blank line, the body says *why*, and gives any numbers that matter (tuning values, sim-script results).
@@ -61,8 +61,8 @@ GitHub is the record of the project's progress. Work that is not pushed can be l
 
 ### Deploying
 
-- The GitHub Pages workflow (`.github/workflows/deploy.yml`) is manual-only, because the repo is private.
-- The shared playable build is a claude.ai artifact (https://claude.ai/artifact/5WSsnuW95aFM3QENx7js8K). To update it after a change:
+- The main public link is GitHub Pages, https://mino-oss-byte.github.io/f1-retro/. The workflow (`.github/workflows/deploy.yml`) builds and deploys it on every push to `main`, so pushing is deploying. Check that the run succeeded (`gh run list --workflow deploy.yml`).
+- The older shared build is a claude.ai artifact (https://claude.ai/artifact/5WSsnuW95aFM3QENx7js8K). To update it after a change:
   1. Run `npm run build`.
   2. Publish a page made from `dist/index.html` with its doctype/html/head/body/meta wrapper lines removed, and `dist/assets/*` as supporting files under `assets/`.
   3. Bundle file names are hashed and change on every build, so set the old bundle's path to `null` when updating.
