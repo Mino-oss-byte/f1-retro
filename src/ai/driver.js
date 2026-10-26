@@ -1,7 +1,7 @@
 import { maxYawRate, gripOf, topSpeedOf, MAX_SPEED, BOOST_FACTOR } from '../car/carPhysics.js';
 
-const CORNER_SAFETY = 0.4; // fraction of the turning capability the AI plans to use
-const BRAKE_DECEL = 34;     // m/s^2 the AI plans to brake at (the car can do ~50)
+const CORNER_SAFETY = 0.46; // fraction of the turning capability the AI plans to use
+const BRAKE_DECEL = 38;     // m/s^2 the AI plans to brake at (the car can do ~50)
 const ACCEL_PLAN = 15;      // m/s^2 the AI assumes it can accelerate at
 
 const wrap = (a) => { while (a > Math.PI) a -= Math.PI * 2; while (a < -Math.PI) a += Math.PI * 2; return a; };
@@ -125,7 +125,7 @@ export function driveAI(car, driver, track, traffic, wantsPit) {
   const off = Math.max(-Math.max(0, maxRight), Math.min(Math.max(0, maxLeft), driver.offset));
 
   // --- steering: pure pursuit toward a point ahead on the line ---
-  const lookahead = Math.max(9, Math.min(45, 5 + 0.45 * Math.abs(speed)));
+  const lookahead = Math.max(7, Math.min(45, 5 + 0.3 * Math.abs(speed)));
   let j = i, travelled = 0;
   while (travelled < lookahead && j - i < n) {
     const k = j % n;

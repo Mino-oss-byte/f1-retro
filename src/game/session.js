@@ -9,7 +9,9 @@ import { createPitState, togglePitRequest, updatePit, inPitLane, setNextCompound
 const PHYSICS_DT = 1 / 120;
 const GRID_SPACING = 7;
 const AI_LAP_FACTOR = 1.045; // measured: an AI lap takes ~4.5% longer than the speed profile's ideal time
-const DIFFICULTY_PACE = { rookie: 0.82, pro: 0.92, legend: 1.0 };
+const DIFFICULTY_PACE = { rookie: 0.86, pro: 0.96, legend: 1.0 };
+const AUTO_EDGE = 1.02;      // auto difficulty: the field aims 2% quicker than the player's practice best
+const MAX_AI_PACE = 1.03;    // ceiling for any one AI car's pace, after its skill roll
 
 // one AI speed profile per tire compound, since each compound has its own top speed
 const profileCache = new Map();
@@ -99,7 +101,7 @@ export class Session {
     // AI pace: from the player's practice best (auto) or a fixed difficulty
     let basePace = DIFFICULTY_PACE.pro;
     if (opts.difficulty === 'auto') {
-      if (opts.bestLap) basePace = Math.max(0.6, Math.min(1.0, (this.profile.refTime * AI_LAP_FACTOR) / opts.bestLap));
+      if (opts.bestLap) basePace = Math.max(0.6, Math.min(1.0, (this.profile.refTime * AI_LAP_FACTOR * AUTO_EDGE) / opts.bestLap));
     } else basePace = DIFFICULTY_PACE[opts.difficulty] || DIFFICULTY_PACE.pro;
     this.basePace = basePace;
 
@@ -126,7 +128,7 @@ export class Session {
       c.mesh = createCarMesh(team.primary, team.secondary);
       this.scene.add(c.mesh);
       const skill = 0.95 + this.rng() * 0.08; // each AI is a little faster or slower, so the field has to pass
-      c.driver = createDriver(track.racingLine, this.profile, Math.min(1.02, basePace * skill), this.profiles);
+      c.driver = createDriver(track.racingLine, this.profile, Math.min(MAX_AI_PACE, basePace * skill), this.profiles);
       c.planPitWear = 0.5 + this.rng() * 0.15; // AI pits once when its tires reach this wear
       this.cars.push(c);
       if (isPlayer) setNextCompound(c, c.compound);
