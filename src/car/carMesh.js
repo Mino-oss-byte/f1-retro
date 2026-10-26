@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const CAR_SCALE = 1.44;
+const CAR_SCALE = 1.22;
 
 const mat = (color) => new THREE.MeshLambertMaterial({ color, flatShading: true });
 
