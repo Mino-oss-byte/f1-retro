@@ -18,7 +18,7 @@ npm run build      # outputs dist/
 Upload `dist/` to any static host:
 - **Netlify**: drag the `dist` folder onto https://app.netlify.com/drop
 - **Vercel**: `npx vercel deploy dist --prod`
-- **GitHub Pages**: push the repo, then use `.github/workflows/deploy.yml` (Settings → Pages → Source: GitHub Actions)
+- **GitHub Pages**: needs a public repo on the free plan. Set Settings → Pages → Source: GitHub Actions, then run **Deploy to GitHub Pages** from the Actions tab (it no longer runs on every push)
 
 ## Controls
 
