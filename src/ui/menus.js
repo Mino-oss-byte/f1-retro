@@ -119,12 +119,12 @@ export function resultsScreen(app, results, trackName) {
   const rows = results.map((r) => {
     const gap = r.position === 1 ? formatTime(r.time) : typeof r.gap === 'number' ? `+${r.gap.toFixed(3)}s` : r.gap;
     return `<tr class="${r.isPlayer ? 'me' : ''}"><td>${r.position}</td>
-      <td><span class="swatch" style="display:inline-block;vertical-align:middle;margin-right:8px;background:linear-gradient(90deg, ${r.team.primary} 55%, ${r.team.secondary} 55%)"></span>${escapeHtml(r.team.name)}${r.isPlayer ? ' (YOU)' : ''}</td>
+      <td><span class="swatch" style="display:inline-block;vertical-align:middle;margin-right:8px;background:linear-gradient(90deg, ${r.team.primary} 55%, ${r.team.secondary} 55%)"></span>${escapeHtml(r.isPlayer ? 'YOU' : r.name)} <span class="hint">${escapeHtml(r.team.name)}</span></td>
       <td>${gap}</td><td>${formatTime(r.bestLap)}</td><td>${r.stops}</td></tr>`;
   }).join('');
   show(`<div class="screen">
     <h2>RESULTS · ${escapeHtml(trackName.toUpperCase())}</h2>
-    <table><tr><th>POS</th><th>TEAM</th><th>TIME / GAP</th><th>BEST LAP</th><th>PITS</th></tr>${rows}</table>
+    <table><tr><th>POS</th><th>DRIVER</th><th>TIME / GAP</th><th>BEST LAP</th><th>PITS</th></tr>${rows}</table>
     <div class="btn-row"><button class="primary" data-act="restart">RACE AGAIN</button><button data-act="garage">GARAGE</button><button data-act="quit">MAIN MENU</button></div>
   </div>`);
   bind({ restart: () => app.restart(), garage: () => app.garage('race'), quit: () => app.quit() });

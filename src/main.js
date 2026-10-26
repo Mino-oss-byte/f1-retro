@@ -5,7 +5,7 @@ import { TRACKS } from './data/tracks/index.js';
 import { DEFAULT_TEAM } from './data/teams.js';
 import { Audio } from './audio.js';
 import { loadSettings, saveSettings, getBestLap, setBestLap, getFlag, setFlag } from './storage.js';
-import { updateHud, showHud, showControls } from './ui/hud.js';
+import { updateHud, showHud, showControls, setMinimapTrack } from './ui/hud.js';
 import {
   titleScreen, modeScreen, garageScreen, loadingScreen, pauseScreen, resultsScreen, creditsScreen, hideMenu,
 } from './ui/menus.js';
@@ -68,6 +68,7 @@ function startSession(mode, trackData) {
       if (prev === null || t < prev) setBestLap(trackData.id, t);
     },
   }, audio);
+  setMinimapTrack(trackData.centerline);
   screen = 'game';
   hideMenu();
   showHud(true);

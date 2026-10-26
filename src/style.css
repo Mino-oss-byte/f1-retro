@@ -27,6 +27,19 @@ canvas { display: block; width: 100vw; height: 100vh; image-rendering: pixelated
 #hud-msg { position: absolute; top: 34%; left: 0; right: 0; text-align: center; font-size: 22px; color: var(--accent); }
 #hud-msg.blink { animation: blink 0.8s steps(2) infinite; }
 @keyframes blink { 50% { opacity: 0.2; } }
+#hud-tower { position: absolute; top: 118px; left: 16px; width: 196px; background: var(--panel); border: 2px solid var(--line); font-size: 9px; line-height: 1; text-shadow: none; }
+#hud-tower .head { padding: 6px 8px; background: var(--red); color: #fff; }
+#hud-tower .row { display: flex; align-items: center; gap: 6px; height: 17px; padding: 0 6px; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+#hud-tower .row b { width: 16px; text-align: right; color: var(--dim); font-weight: normal; }
+#hud-tower .row i { width: 4px; height: 11px; flex: none; }
+#hud-tower .code { width: 30px; }
+#hud-tower .gap { flex: 1; text-align: right; color: var(--dim); }
+#hud-tower .gap .pit { color: var(--accent); }
+#hud-tower .tyre { width: 9px; text-align: center; }
+#hud-tower .row.me { background: var(--accent); color: #111; }
+#hud-tower .row.me b, #hud-tower .row.me .gap { color: #111; }
+#hud-tower .row.me .tyre { text-shadow: 0 0 2px #000; }
+#hud-map { position: absolute; top: 112px; right: 16px; width: 200px; height: 200px; background: rgba(10, 12, 20, 0.55); border: 2px solid var(--line); image-rendering: auto; }
 #hud-lights { position: absolute; top: 18%; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; padding: 12px 16px; background: #111; border: 3px solid #333; }
 #hud-lights span { width: 30px; height: 30px; border-radius: 50%; background: #2a0b0b; border: 2px solid #000; }
 #hud-lights span.on { background: var(--red); box-shadow: 0 0 14px var(--red); }
@@ -81,4 +94,6 @@ tr.me td { color: var(--accent); }
   .screen h1 { font-size: 22px; }
   #hud .big { font-size: 14px; }
   .bar { width: 70px; }
+  #hud-tower { transform: scale(0.8); transform-origin: top left; }
+  #hud-map { width: 120px; height: 120px; }
 }

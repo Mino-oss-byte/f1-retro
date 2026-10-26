@@ -42,7 +42,7 @@ To add or regenerate a track, run `scripts/import-track.js`, which converts TUM 
 
 **Tuning constants** are at the top of each module: `carPhysics.js` for speed, grip, tire wear, `COMPOUNDS` and overtake charge; `driver.js` for AI braking and cornering margins; `session.js` for grid spacing and difficulty pace; `trackBuilder.js` for the pit-lane limit and scenery spacing. After changing them, re-check with the sim scripts.
 
-**UI.** The HUD (`src/ui/hud.js`) updates fixed DOM elements declared in `index.html` from `session.hudState()` and `session.events`. Menus (`src/ui/menus.js`) render HTML strings into `#menu`. `src/storage.js` wraps `localStorage` (prefix `f1retro.`) so it fails silently when storage is blocked. Team names and colors are only in `src/data/teams.js`.
+**UI.** The HUD (`src/ui/hud.js`) updates fixed DOM elements declared in `index.html` from `session.hudState()` and `session.events`. Menus (`src/ui/menus.js`) render HTML strings into `#menu`. `src/storage.js` wraps `localStorage` (prefix `f1retro.`) so it fails silently when storage is blocked. Team names and colors are only in `src/data/teams.js`; the real F1 driver names the AI is randomly given are in `src/data/drivers.js`. In a race the HUD shows an F1-style timing tower on the left (gaps to the leader come from `Session.timeMark`, taken every `TIMING_STEP` metres) and a minimap on the right (`setMinimapTrack` in `hud.js`, drawn from the track centerline).
 
 ## Workflow
 

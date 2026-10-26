@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { TEAMS } from '../data/teams.js';
+import { DRIVERS, PLAYER_DRIVER } from '../data/drivers.js';
 import { createTrack } from '../track/trackBuilder.js';
 import { createCarMesh } from '../car/carMesh.js';
 import { createCarState, stepCar, cycleTractionControl, COMPOUNDS, COMPOUND_ORDER, MAX_SPEED, BOOST_MIN_ENERGY } from '../car/carPhysics.js';
@@ -12,6 +13,7 @@ const AI_LAP_FACTOR = 1.045; // measured: an AI lap takes ~4.5% longer than the 
 const DIFFICULTY_PACE = { rookie: 0.86, pro: 0.96, legend: 1.0 };
 const AUTO_EDGE = 1.02;      // auto difficulty: the field aims 2% quicker than the player's practice best
 const MAX_AI_PACE = 1.03;    // ceiling for any one AI car's pace, after its skill roll
+const TIMING_STEP = 100;     // metres between the timing marks the leaderboard gaps are taken at
 
 // one AI speed profile per tire compound, since each compound has its own top speed
 const profileCache = new Map();
@@ -48,6 +50,7 @@ export class Session {
     this.paused = false;
     this.finishOrder = 0;
     this.events = [];        // transient messages for the HUD
+    this.markTimes = new Map(); // timing mark -> clock when the first car crossed it
 
     this.track = createTrack(opts.trackData);
     this.profiles = profilesFor(this.track);
@@ -97,6 +100,13 @@ export class Session {
     }
     const order = this.mode === 'race' ? aiTeams.slice() : [];
     if (this.mode === 'race') order.splice(5, 0, playerTeam); else order.push(playerTeam);
+    // AI drivers get random real F1 names; their own RNG keeps the skill and tire draws unchanged
+    const nameRng = mulberry((opts.seed || 1337) ^ 0x5bd1e995);
+    const names = DRIVERS.slice();
+    for (let i = names.length - 1; i > 0; i--) {
+      const j = Math.floor(nameRng() * (i + 1));
+      [names[i], names[j]] = [names[j], names[i]];
+    }
 
     // AI pace: from the player's practice best (auto) or a fixed difficulty
     let basePace = DIFFICULTY_PACE.pro;
@@ -119,6 +129,9 @@ export class Session {
       c.laps = -1;
       c.team = team;
       c.isPlayer = isPlayer;
+      const who = isPlayer ? PLAYER_DRIVER : names.pop();
+      c.name = who.name;
+      c.code = who.code;
       c.gridIndex = gridIndex;
       c.pit = createPitState(TEAMS.indexOf(team));
       c.finished = false;
@@ -133,6 +146,8 @@ export class Session {
       this.cars.push(c);
       if (isPlayer) setNextCompound(c, c.compound);
       track.step(c);
+      c.timingMark = Math.floor(c.progress / TIMING_STEP);
+      c.gapLeader = null;
     });
     this.player = this.cars.find((c) => c.isPlayer);
     this.ranked = this.cars.slice();
@@ -209,6 +224,7 @@ export class Session {
       const prevLaps = c.laps;
       this.track.step(c);
       if (c.laps > prevLaps) this.onLapCrossed(c);
+      if (this.mode === 'race' && racing && !c.finished) this.timeMark(c);
       if (c.isPlayer && c.hitBarrier) this.audio?.thud(c.speed);
       if (racing && !c.isPlayer) this.unstick(c, dt);
     }
@@ -310,6 +326,36 @@ export class Session {
   }
 
   // ---- race order and gaps ----
+  // Gap to the leader, timed like F1: a car's gap is how long after the first car it crossed its latest timing mark.
+  timeMark(c) {
+    const mark = Math.floor(c.progress / TIMING_STEP);
+    if (mark <= c.timingMark) return;
+    c.timingMark = mark;
+    if (!this.markTimes.has(mark)) this.markTimes.set(mark, this.clock);
+    c.gapLeader = this.clock - this.markTimes.get(mark);
+  }
+
+  // A slow or stopped car's gap keeps growing once the leader has crossed its next mark.
+  liveGap(c) {
+    const next = this.markTimes.get(c.timingMark + 1);
+    return next === undefined ? c.gapLeader : Math.max(c.gapLeader ?? 0, this.clock - next);
+  }
+
+  // Leaderboard rows, in race order.
+  standings() {
+    const L = this.track.length;
+    const leaderProgress = Math.min(this.ranked[0].progress, this.totalLaps * L);
+    return this.ranked.map((c, i) => ({
+      code: c.code,
+      team: c.team,
+      isPlayer: c.isPlayer,
+      gap: i === 0 ? null : c.finished ? c.finishTime - this.ranked[0].finishTime : this.liveGap(c),
+      lapsDown: c.finished ? 0 : Math.max(0, Math.floor((leaderProgress - c.progress) / L)),
+      inPit: c.pit.phase !== 'none',
+      compound: c.compound,
+    }));
+  }
+
   updateRanking() {
     this.ranked = this.cars.slice().sort((a, b) => {
       if (a.finished && b.finished) return a.finishTime - b.finishTime;
@@ -381,6 +427,10 @@ export class Session {
       gapBehind: p.gapBehind,
       aheadTeam: this.ranked[p.position - 2]?.team,
       behindTeam: this.ranked[p.position]?.team,
+      aheadCode: this.ranked[p.position - 2]?.code,
+      behindCode: this.ranked[p.position]?.code,
+      standings: this.mode === 'race' ? this.standings() : null,
+      cars: this.cars.map((c) => ({ x: c.x, z: c.z, primary: c.team.primary, secondary: c.team.secondary, isPlayer: c.isPlayer })),
       lapTime: p.lapStart === null ? 0 : this.clock - p.lapStart,
       lastLap: p.lastLap,
       bestLap: p.bestLap,
@@ -417,7 +467,7 @@ export class Session {
         const est = this.clock + remaining / Math.max(c.speed, 40) - (winner.finishTime ?? this.clock);
         note = lapsDown >= 1 ? `+${lapsDown} lap${lapsDown > 1 ? 's' : ''}` : est;
       }
-      return { position: i + 1, team: c.team, isPlayer: c.isPlayer, finished: c.finished, time: i === 0 ? winner.finishTime : null, gap: i === 0 ? null : note, bestLap: c.bestLap, stops: c.pit.stops };
+      return { position: i + 1, team: c.team, name: c.name, isPlayer: c.isPlayer, finished: c.finished, time: i === 0 ? winner.finishTime : null, gap: i === 0 ? null : note, bestLap: c.bestLap, stops: c.pit.stops };
     });
   }
 
