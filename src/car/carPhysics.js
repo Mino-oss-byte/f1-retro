@@ -42,6 +42,7 @@ const BOOST_CHARGE = 0.18;   // energy per second of corner braking (roughly a t
 const BOOST_CHARGE_MIN_SPEED = 10;
 const BOOST_DRAIN = 0.14;
 const BOOST_ACCEL = 1.35;
+const BOOST_FADE = 5;        // m/s^2 the speed bleeds off at once overtake mode ends (~18 km/h per second)
 export const BOOST_MIN_ENERGY = 0.05; // needed to switch overtake mode on
 
 export function createCarState(x, z, heading) {
@@ -92,6 +93,7 @@ function rampSteer(car, target, dt) {
 // heading 0 points along +z; positive heading turns toward +x
 export function stepCar(car, input, dt, onTrack) {
   const throttle = input.throttle ? 1 : 0;
+  const speedBefore = car.speed;
   const steerInput = input.steer !== undefined
     ? (car.steer = input.steer)
     : rampSteer(car, (input.left ? 1 : 0) - (input.right ? 1 : 0), dt);
@@ -130,12 +132,11 @@ export function stepCar(car, input, dt, onTrack) {
   car.speed -= GRAVITY * car.slope * (car.speed >= 0 ? 1 : -1) * dt; // uphill slows, downhill speeds up
 
   const tireTop = topSpeedOf(car);
-  const top = car.boosting ? tireTop * BOOST_FACTOR : tireTop;
   if (!onTrack && car.speed > OFFTRACK_MAX) {
     car.speed = Math.max(OFFTRACK_MAX, car.speed - OFFTRACK_DRAG * dt);
   }
-  // coming off boost, bleed back down to normal top speed rather than snapping
-  if (!car.boosting && car.speed > tireTop) car.speed = Math.max(tireTop, car.speed - 12 * dt);
+  // coming off boost, the cap bleeds back down to normal top speed over a few seconds rather than snapping
+  const top = car.boosting ? tireTop * BOOST_FACTOR : Math.max(tireTop, Math.min(tireTop * BOOST_FACTOR, speedBefore - BOOST_FADE * dt));
   car.speed = Math.max(-REVERSE_MAX, Math.min(top, car.speed));
 
   // steering weakens at high speed and on worn tires
